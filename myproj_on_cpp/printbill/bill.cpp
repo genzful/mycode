@@ -1,10 +1,8 @@
 #include <iostream> // for std::cin && std::cout
 #include <string>   // for std::string
 
-using namespace std;
-
 // func which set every line
-void getDigitLine(char digit, int row, string& line) {
+void getDigitLine(char digit, int row, std::string& line) {
   switch (digit) {
   case '0':
     switch (row) {
@@ -261,25 +259,42 @@ void getDigitLine(char digit, int row, string& line) {
   }
 }
 
-int main() {
-  int num;
-  cout << "Enter a number: ";
-  cin >> num;
-  string numStr = to_string(num);
-  char digits[10];
+// main func
+int main(int argc, char* argv[]) {
+  // test for 2 arguments
+  if (argc == 2) {
+    if (argv[1] == "--help") {
+      // --help output
+      std::cout << "usage: ./bill <number which u want to print>" << std::endl;
+    } else {
+      try {
+        // check for number in argv[]
+        int var = std::stoi(argv[1]);
+      } catch (const std::exception& e) {
+        std::cout << "argument not number!";
+        return 1;
+      }
+      std::string numStr = argv[1];
+      char digits[10];
 
-  for (int i = 0; i < numStr.length(); i++) {
-    digits[i] = numStr[i];
-  }
+      // cycle for filling array digits [10]
+      for (int i = 0; i < numStr.length(); i++) {
+        digits[i] = numStr[i];
+      }
 
-  for (int row = 0; row < 8; ++row) {
-    string outputLine;
-    for (int d = 0; d < numStr.length(); ++d) {
-      string digitLine;
-      getDigitLine(digits[d], row, digitLine);
-      outputLine += digitLine + " ";
+      // filling line and print it for 
+      for (int row = 0; row < 8; ++row) {
+        std::string outputLine;
+        for (int d = 0; d < numStr.length(); ++d) {
+          std::string digitLine;
+          getDigitLine(digits[d], row, digitLine);
+          outputLine += digitLine + " ";
+        }
+        std::cout << outputLine << std::endl;
+      }
     }
-    cout << outputLine << endl;
+  } else {
+    std::cout << "bill printer need only 2 arguments\n --help for help" << std::endl;
   }
   return 0;
 }
