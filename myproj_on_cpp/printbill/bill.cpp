@@ -1,9 +1,10 @@
-#include <iostream>
-#include <string>
+#include <iostream> // for std::cin && std::cout
+#include <string>   // for std::string
 
 using namespace std;
 
-void getDigitLine(char digit, int row, string &line) {
+// func which set every line
+void getDigitLine(char digit, int row, string& line) {
   switch (digit) {
   case '0':
     switch (row) {
@@ -261,13 +262,11 @@ void getDigitLine(char digit, int row, string &line) {
 }
 
 int main() {
-  int *num = new int;
+  int num;
   cout << "Enter a number: ";
-  cin >> *num;
-  string numStr = to_string(*num);
-  delete num;
-  num = nullptr;
-  char *digits = new char[10];
+  cin >> num;
+  string numStr = to_string(num);
+  char digits[10];
 
   for (int i = 0; i < numStr.length(); i++) {
     digits[i] = numStr[i];
