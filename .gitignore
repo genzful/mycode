@@ -1,0 +1,40 @@
+'EOF'
+# cpp
+*.o
+*.out
+*.exe
+*.a
+*.so
+*.dylib
+
+# exe
+program
+a.out
+
+build/
+bin/
+dist/
+
+# ide
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Temp files
+*.tmp
+*.temp
+
+# VS Code
+.vscode/
+
+# CLion
+cmake-build-debug/
+cmake-build-release/
+EOF
