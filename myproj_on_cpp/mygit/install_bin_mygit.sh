@@ -1,139 +1,164 @@
 #!/bin/bash
-# install_mygit_universal.sh
 
-# Определяем реального пользователя
 REAL_USER="$USER"
-if [ -z "$REAL_USER" ]; then
-    REAL_USER=$(id -un)
-fi
+[ -z "$REAL_USER" ] && REAL_USER=$(id -un)
 
-SOURCE_DIR="/home/$REAL_USER/mycode/myproj_on_cpp/mygit"
+SOURCE_DIR="$HOME/mycode/myproj_on_cpp/mygit"
 BINARY_NAME="mygit"
 SOURCE_BINARY="$SOURCE_DIR/source_code/mygit"
-TARGET_BINARY="/usr/local/bin/$BINARY_NAME"  # Используем /usr/local/bin вместо /usr/bin
+TARGET_BINARY="/usr/local/bin/$BINARY_NAME"
 
-echo "Installing mygit as system binary..."
-echo "User: $REAL_USER"
-echo "Source: $SOURCE_BINARY"
-echo "Target: $TARGET_BINARY"
+# func for make a bill-like
+print_box() {
+    local title="$1"
+    local content="$2"
+    
+    # finding max width
+    local max_len=0
+    while IFS= read -r line; do
+        local len=${#line}
+        [ $len -gt $max_len ] && max_len=$len
+    done <<< "$content"
+    
+    [ -n "$title" ] && {
+        local title_len=${#title}
+        [ $title_len -gt $max_len ] && max_len=$title_len
+    }
+    
+    # min width
+    [ $max_len -lt 40 ] && max_len=40
+    local width=$((max_len + 4))
+    
+    echo ""
+
+    echo "+$(printf '%*s' $((width-2)) | tr ' ' '-')+"
+    
+    # title
+    if [ -n "$title" ]; then
+        local title_len=${#title}
+        local left_padding=$(( (width - title_len - 2) / 2 ))
+        local right_padding=$(( width - title_len - 2 - left_padding ))
+        
+        printf "|%*s%s%*s|\n" $left_padding "" "$title" $right_padding ""
+        echo "+$(printf '%*s' $((width-2)) | tr ' ' '-')+"
+    fi
+    
+    # main
+    echo "$content" | while IFS= read -r line; do
+        printf "| %-*s |\n" $((width-4)) "$line"
+    done
+
+    echo "+$(printf '%*s' $((width-2)) | tr ' ' '-')+"
+    echo ""
+}
+
+DOC="mygit - Custom Git version control system
+Author: genz
+Source: $SOURCE_DIR
+
+Features:
++ Commit tracking
++ Repository storage in text files
++ Revert to previous commits
++ Viewing commits and repositories
+
+Installation options:
+1. System-wide (/usr/local/bin)
+2. User-only (~/.local/bin)
+3. Cancel installation"
+
+print_box "Documentation" "$DOC"
+
+echo "Installing mygit..."
+echo "  User: $REAL_USER"
+echo "  Source: $SOURCE_BINARY"
 echo ""
 
-# Проверяем, существует ли бинарник
-if [ ! -f "$SOURCE_BINARY" ]; then
-    echo "ERROR: Binary not found at $SOURCE_BINARY"
-    echo "Please build/compile mygit first!"
+# check exists of bin
+[ ! -f "$SOURCE_BINARY" ] && {
+    ERROR_MSG="Binary not found at:
+$SOURCE_BINARY
+
+Please build with:
+cd $SOURCE_DIR
+make"
+    
+    print_box "ERROR!" "$ERROR_MSG"
     exit 1
-fi
-
-# Функция для проверки прав
-check_permissions() {
-    local target_dir="/usr/local/bin"
-    
-    # Проверяем, можем ли писать в /usr/local/bin
-    if [ -w "$target_dir" ]; then
-        echo "You have write permissions to $target_dir"
-        return 0
-    else
-        echo "Need elevated privileges to write to $target_dir"
-        return 1
-    fi
 }
 
-# Функция для установки с sudo
-install_with_sudo() {
-    echo "Requesting sudo privileges..."
-    
-    # Копируем с sudo
-    sudo cp "$SOURCE_BINARY" "$TARGET_BINARY"
-    
-    # Устанавливаем права
-    sudo chown root:root "$TARGET_BINARY"
-    sudo chmod 755 "$TARGET_BINARY"
-}
-
-# Функция для установки без sudo
-install_without_sudo() {
-    echo "Installing without sudo..."
-    
-    # Пробуем создать symbolic link в ~/.local/bin
-    LOCAL_BIN="$HOME/.local/bin"
-    mkdir -p "$LOCAL_BIN"
-    
-    # Создаем symlink
-    ln -sf "$SOURCE_BINARY" "$LOCAL_BIN/$BINARY_NAME"
-    
-    # Устанавливаем права
-    chmod +x "$SOURCE_BINARY"
-    
-    TARGET_BINARY="$LOCAL_BIN/$BINARY_NAME"
-}
-
-# Основная логика
-if check_permissions; then
-    # Есть права - устанавливаем напрямую
+# check permission
+if [ -w "/usr/local/bin" ]; then
     cp "$SOURCE_BINARY" "$TARGET_BINARY"
     chmod 755 "$TARGET_BINARY"
+    echo "Installed to $TARGET_BINARY"
 else
-    # Выбор способа установки
-    echo ""
-    echo "Choose installation method:"
-    echo "  1) Install system-wide with sudo (requires password)"
-    echo "  2) Install for current user only (no sudo needed)"
-    echo "  3) Cancel installation"
-    echo ""
+    print_box "Installation Method" "1) System-wide (requires sudo)
+2) User-only (no sudo)
+3) Cancel installation"
     
-    read -p "Enter choice [1-3]: " choice
+    read -p "Choice [1-3]: " choice
     
     case $choice in
         1)
-            install_with_sudo
+            echo "Requesting sudo privileges..."
+            sudo cp "$SOURCE_BINARY" "$TARGET_BINARY" && \
+            sudo chown root:root "$TARGET_BINARY" && \
+            sudo chmod 755 "$TARGET_BINARY" && {
+                echo "System installation complete"
+            } || {
+                echo "Installation failed, Check permissions or disk space."
+                exit 1
+            }
             ;;
         2)
-            install_without_sudo
+            LOCAL_BIN="$HOME/.local/bin"
+            mkdir -p "$LOCAL_BIN"
+            cp "$SOURCE_BINARY" "$LOCAL_BIN/$BINARY_NAME"
+            chmod +x "$LOCAL_BIN/$BINARY_NAME"
+            TARGET_BINARY="$LOCAL_BIN/$BINARY_NAME"
+            echo "Installed to $TARGET_BINARY"
+            
+            # check path
+            if [[ ":$PATH:" != *":$LOCAL_BIN:"* ]]; then
+                echo ""
+                echo "Note: ~/.local/bin is not in your PATH"
+                echo "Add this to ~/.bashrc or ~/.zshrc:"
+                echo "export PATH=\"\$HOME/.local/bin:\$PATH\""
+                echo "Then run: source ~/.bashrc"
+            fi
             ;;
         3)
             echo "Installation cancelled."
             exit 0
             ;;
         *)
-            echo "Invalid choice. Using user installation."
-            install_without_sudo
+            echo "Invalid choice, using user install..."
+            LOCAL_BIN="$HOME/.local/bin"
+            mkdir -p "$LOCAL_BIN"
+            cp "$SOURCE_BINARY" "$LOCAL_BIN/$BINARY_NAME"
+            chmod +x "$LOCAL_BIN/$BINARY_NAME"
+            TARGET_BINARY="$LOCAL_BIN/$BINARY_NAME"
             ;;
     esac
 fi
 
-# Проверяем результат
+# check successful installation
 if [ $? -eq 0 ]; then
-    echo ""
-    echo "✓ Success! mygit has been installed."
-    echo "  Binary location: $TARGET_BINARY"
-    echo ""
+    RESULT="Location: $TARGET_BINARY"
     
-    # Проверяем доступность в PATH
-    if command -v "$BINARY_NAME" > /dev/null 2>&1; then
-        echo "Verification:"
-        echo "  Command found at: $(which $BINARY_NAME)"
-        
-        # Пробуем получить версию
-        echo -n "  Version: "
-        "$BINARY_NAME" --version 2>/dev/null || echo "not available"
+    if command -v "$BINARY_NAME" >/dev/null 2>&1; then
+        RESULT="$RESULT
+PATH: $(which "$BINARY_NAME")"
     else
-        echo "Note: The binary might not be in your PATH yet."
-        echo ""
-        
-        # Показываем, как добавить в PATH если нужно
-        if [[ "$TARGET_BINARY" == *".local/bin"* ]]; then
-            echo "To add to PATH, add this line to your shell config (~/.bashrc, ~/.zshrc):"
-            echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
-            echo ""
-            echo "Then reload: source ~/.bashrc"
-        fi
+        RESULT="$RESULT
+Not in PATH - add to ~/.bashrc:
+export PATH=\"\$HOME/.local/bin:\$PATH\""
     fi
     
-    echo ""
-    echo "You can now use: $BINARY_NAME"
-    
+    print_box "Installation Result" "$RESULT"
+    echo "Installation successful! Try: $BINARY_NAME --help"
 else
-    echo "✗ ERROR: Installation failed!"
+    print_box "Installation Failed" "Something went wrong during installation."
     exit 1
 fi
