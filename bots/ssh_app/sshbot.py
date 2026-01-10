@@ -10,10 +10,10 @@ import requests
 import telebot
 from telebot import types
 
-bot = telebot.TeleBot("8348562388:AAG6Fpp7AKpZO4bPRtvUikbkatF962KXTNk")
+bot = telebot.TeleBot("token")
 state = 0
-passwd = "genzfAnder725"
-API = "692689c2793ce2e0a52d1bf56a90e4c8"
+passwd = "your pswd"
+API = "api"
 
 
 def init_db():
