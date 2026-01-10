@@ -16,25 +16,36 @@ public:
              {'6', '-'}, {'7', '-'}, {'8', '-'}, {'9', '-'}};
   }
 
-  friend ostream &operator<<(ostream &out, const Board &obj) {
-    int i = 1;
-    for (auto itr = obj.board.begin(); itr != obj.board.end(); ++itr) {
-      if (i == 1) {
-        out << '|';
-      }
-      out << itr->second << '|';
-      if (i % 3 == 0 && i != 9) {
-        out << '\n' << '|';
-      }
-      i++;
+  void print() {
+    string printable;
+    for (auto itr = board.begin(); itr != board.end(); ++itr) {
+      printable += itr->second;
     }
-    out << '\n';
-    return out;
+    system("/usr/bin/clear");
+    string message =
+        "/usr/bin/python ~/mycode/myproj_on_cpp/tiktaktoe/source_code/printboard.py " + printable;
+    system(message.c_str());
   }
-
   void set(char choose, char val) { board[choose] = val; }
 
   map<char, char> getboard() { return board; }
+
+  // friend ostream &operator<<(ostream &out, const Board &obj) {
+  //   int i = 1;
+  //   for (auto itr = obj.board.begin(); itr != obj.board.end(); ++itr) {
+  //     if (i == 1) {
+  //       out << '|';
+  //     }
+  //     out << itr->second << '|';
+  //     if (i % 3 == 0 && i != 9) {
+  //       out << '\n' << '|';
+  //     }
+  //     i++;
+  //   }
+  //   out << '\n';
+  //   return out;
+  // }
+
 };
 
 class Player {
@@ -178,9 +189,9 @@ int main() {
   Game game(board, player1, player2);
 
   while (!game.isover()) {
-    cout << board << endl;
+    board.print();
     game.move();
   }
-  cout << board << endl;
+  board.print();
   return 0;
 }
