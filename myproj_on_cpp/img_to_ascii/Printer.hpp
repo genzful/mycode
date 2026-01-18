@@ -3,25 +3,25 @@
 #include <string>
 #include <iostream>
 #include "map.hpp"
+#include <algorithm>
+#include <cctype>
+
+std::string toUpper(const std::string& str) {
+    std::string result = str;
+    std::transform(result.begin(), result.end(), result.begin(),
+                   [](unsigned char c) { return std::toupper(c); });
+    return result;
+}
 
 namespace Printer {
 
-
-
 void print_ascii(const char* text) {
-    // std::cout << "sometest" << std::endl;
-    // std::cout << text << std::endl;
     std::string arg = text;
     char sym;
     std::cout << "input the sym ~~> ";
     std::cin >> sym;
-    try {
-        int var = std::stoi(arg);
-    } catch (const std::exception& e) {
-        throw std::runtime_error("argument not number!");
-    }
     
-    std::string numStr = arg;
+    std::string numStr = toUpper(arg);
     
     // filling line and print it for each row
     for (int row = 1; row <= 7; ++row) {
