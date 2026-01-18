@@ -3,6 +3,15 @@
 
 namespace MAP {
 
+// func which change $ on ur sym
+void replaceDollarWithSym(std::string& str, char sym) {
+    for (char& c : str) {
+        if (c == '$') {
+            c = sym;
+        }
+    }
+}
+
 void getDigitLine(char digit, int row, std::string& line, const char sym) {
     std::string pattern;
     
