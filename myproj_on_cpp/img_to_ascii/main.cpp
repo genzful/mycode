@@ -1,6 +1,9 @@
 #include <iostream>
-#include "Printer.hpp"
+#include "lib/Printer.hpp"
 
-int main(int argc, char* argv[]) {
-    Printer::print_ascii(argv[1]);
-}
+int main(int argc, char* argv[]) {}
+
+// using
+/*
+    Printer::print_ascii();
+*/
