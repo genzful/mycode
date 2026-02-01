@@ -17,6 +17,7 @@ public:
     
     bool connectToServer(const std::string& address, int port) {
         sock = socket(AF_INET, SOCK_STREAM, 0);
+        
         if (sock == -1) {
             std::cerr << "Ошибка создания сокета" << std::endl;
             return false;
@@ -30,7 +31,6 @@ public:
             close(sock);
             return false;
         }
-
         if (connect(sock, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
             std::cerr << "Ошибка подключения к серверу" << std::endl;
             close(sock);
@@ -40,7 +40,7 @@ public:
         std::cout << "Успешно подключено к " << address << ":" << port << std::endl;
         return true;
     }
-    
+
     bool sendData(const std::string& data) {
         if (send(sock, data.c_str(), data.length(), 0) < 0) {
             std::cerr << "Ошибка отправки данных" << std::endl;
@@ -78,20 +78,23 @@ public:
 int main() {
     Client client;
 
-    std::string serverAddress = "127.0.0.1";
+    std::string serverAddress;
+    std::cin >> serverAddress;
     int port = 7252;
     
     if (client.connectToServer(serverAddress, port)) {
-        std::string message = "Hello, Server!";
-        if (client.sendData(message)) {
-            std::cout << "Отправлено: " << message << std::endl;
-        }
+        while (true) {
+            std::string message;
+            std::cin >> message;
+            if (client.sendData(message)) {
+                std::cout << "Отправлено: " << message << std::endl;
+            }
 
-        std::string response = client.receiveData();
-        if (!response.empty()) {
-            std::cout << "Получено: " << response << std::endl;
+            std::string response = client.receiveData();
+            if (!response.empty()) {
+                std::cout << "Получено: " << response << std::endl;
+            }
         }
-
         client.disconnect();
     }
     
