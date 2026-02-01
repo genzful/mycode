@@ -37,4 +37,5 @@ Makefile
 # CLion
 cmake-build-debug/
 cmake-build-release/
-EOF
+EOFmyproj_on_cpp/teletty/source_code/genzchat_server/stderr.log
+*.log
