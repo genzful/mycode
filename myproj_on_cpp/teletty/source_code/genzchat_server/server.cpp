@@ -13,12 +13,13 @@
 
 using namespace std;
 
-const int LISTENPORT = 7252;        // port for listen
-const int BUFFER_SIZE = 1024;       // buffer size
-const int MAX_CONNECTIONS = 1000;     // max connection
-const string path_for_logs = "connections.log"; // path to logs of connections
-const string path_to_err = "stderr.log"; // path to errors
-const char* IP_FOR_LISTEN = "127.0.0.1";
+const int LISTENPORT = 7252;                      // port for listen
+const int BUFFER_SIZE = 1024;                     // buffer size
+const int MAX_CONNECTIONS = 1000;                 // max connection
+const string path_for_logs = "connections.log";   // path to logs of connections
+const string path_to_err = "stderr.log";          // path to errors
+const char* IP_FOR_LISTEN = "127.0.0.1";          // ip for listen
+const string path_to_db = "./users.db";                 // path to database
 
 // func of logging
 void error_log(const string& err) {
@@ -31,15 +32,16 @@ void error_log(const string& err) {
 class Server {
 private:
     unordered_map<string, int> connected;      // ip -> descriptor
-    int server_fd;                   // descriptor
-    int client2;                     // client
-    struct sockaddr_in server_addr;  // address
+    int server_fd;                             // descriptor
+    int client2;                               // client
+    struct sockaddr_in server_addr;            // address
     // Theme render;
 public:
     Server() : server_fd(-1) {}
 
     void start() {
-        // creating of socket - ИСПРАВЛЕНО!
+        DB::createDB(path_to_db);
+        
         server_fd = socket(AF_INET, SOCK_STREAM, 0);
         if (server_fd < 0) {
             error_log("Socket creation failed");
@@ -118,9 +120,20 @@ public:
         char name_buffer[BUFFER_SIZE];
         memset(name_buffer, 0, BUFFER_SIZE);
         int name_received = recv(client_fd, name_buffer, BUFFER_SIZE - 1, 0);
-        
-        cout << name_buffer << endl;
-        printMapArrow();
+
+        if (name_received > 0) {
+            name_buffer[name_received] = '\0';
+            
+            char* newline_pos = strchr(name_buffer, '\n');
+            if (newline_pos) *newline_pos = '\0';
+            
+            newline_pos = strchr(name_buffer, '\r');
+            if (newline_pos) *newline_pos = '\0';
+            
+            string client_name = name_buffer;
+        }
+
+        DB::insert(path_to_db, client_ip, name_buffer);
 
         if (connected.size() > 1) {
             string clients_msg = "Connected to chat\n";
@@ -145,6 +158,8 @@ public:
             if (buffer[bytes_received - 1] == '\n') {
                 buffer[bytes_received - 1] = '\0';
             }
+
+            DB::insert(path_to_db, client_ip, name_buffer);
             
             if (connected.size() > 1) {
                 for (const auto& pair : connected) {
@@ -160,11 +175,11 @@ public:
         }
     }
 
-    void printMapArrow() {
-        for (const auto& pair : connected) {
-            cout << pair.first << " ~> " << pair.second << endl;
-        }
-    }
+    // void printMapArrow() {
+    //     for (const auto& pair : connected) {
+    //         cout << pair.first << " ~> " << pair.second << endl;
+    //     }
+    // }
 
     ~Server() {
         if (server_fd >= 0) {
