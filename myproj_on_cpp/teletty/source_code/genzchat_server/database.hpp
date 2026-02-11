@@ -29,13 +29,13 @@ namespace DB{
         sqlite3_close(DB);
     }
 
-  void insert(const string& PATH, const string& IP, const string& NAME) {
+  bool insert(const string& PATH, const string& IP, const string& NAME) {
       sqlite3* DB; 
       int exit = sqlite3_open(PATH.c_str(), &DB);
       
       if (exit != SQLITE_OK) {
           cerr << "Cannot open database: " << sqlite3_errmsg(DB) << endl;
-          return;
+          return false;
       }
       
       string sqlcommand = "INSERT INTO USERS (NAME, IP) VALUES ('" + NAME + "', '" + IP + "');";
@@ -44,11 +44,13 @@ namespace DB{
       exit = sqlite3_exec(DB, sqlcommand.c_str(), NULL, 0, &messageError);
       
       if (exit != SQLITE_OK) {
-          cerr << "SQL error: " << messageError << endl;
           sqlite3_free(messageError);
+      	  return false;
       }
       
       sqlite3_close(DB);
+
+      return true;
   }
 }
 

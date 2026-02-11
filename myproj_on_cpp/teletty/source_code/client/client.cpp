@@ -77,26 +77,36 @@ public:
 
 int main() {
     Client client;
+    std::string msg;
+    const std::string serverAddress = "127.0.0.1";
+    const int port = 7252;
+    std::string welcome_msg = "";
 
-    std::string serverAddress;
-    std::cin >> serverAddress;
-    int port = 7252;
-    
-    if (client.connectToServer(serverAddress, port)) {
-        while (true) {
-            std::string message;
-            std::cin >> message;
-            if (client.sendData(message)) {
-                std::cout << "Отправлено: " << message << std::endl;
-            }
-
-            std::string response = client.receiveData();
-            if (!response.empty()) {
-                std::cout << "Получено: " << response << std::endl;
-            }
-        }
-        client.disconnect();
+    if (!client.connectToServer(serverAddress, port)) {
+        std::cout << "не удалось подключиться к серваку" << std::endl;
     }
+    
+    welcome_msg = client.receiveData();
+    if (!welcome_msg.empty()) {
+        std::cout << welcome_msg << std::endl;
+    } else {
+        std::cerr << "Сервер в отключке" << std::endl;
+        client.disconnect();
+        return 1;
+    }
+
+    while (true) {
+        std::cin >> msg;
+        client.sendData(msg.c_str());
+        std::string resp = client.receiveData();
+        if (resp == "this name already exists") {
+            std::cout << resp << std::endl;
+            return 1;
+        }
+        std::cout << resp;
+    }
+    
+    client.disconnect();
     
     return 0;
 }

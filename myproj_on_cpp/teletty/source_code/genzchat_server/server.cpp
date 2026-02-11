@@ -133,7 +133,10 @@ public:
             string client_name = name_buffer;
         }
 
-        DB::insert(path_to_db, client_ip, name_buffer);
+        if (!DB::insert(path_to_db, client_ip, name_buffer)) {
+            send(client_fd, "this name already exists", strlen("this name already exists"), 0);
+            close(client_fd);
+        }
 
         if (connected.size() > 1) {
             string clients_msg = "Connected to chat\n";
@@ -158,8 +161,6 @@ public:
             if (buffer[bytes_received - 1] == '\n') {
                 buffer[bytes_received - 1] = '\0';
             }
-
-            DB::insert(path_to_db, client_ip, name_buffer);
             
             if (connected.size() > 1) {
                 for (const auto& pair : connected) {
