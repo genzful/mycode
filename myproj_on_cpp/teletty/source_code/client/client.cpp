@@ -5,6 +5,14 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <netdb.h>
+#include "database.hpp"
+#include <fstream>
+#include <filesystem>
+
+const char* homeDir = getenv("HOME");
+std::string currentUser;
+
+namespace fs = std::filesystem;
 
 // client
 class Client {
@@ -75,12 +83,49 @@ public:
     }
 };
 
+void createDIR() {
+    const char* home = getenv("HOME");
+    if (home) {
+        fs::create_directories(std::string(homeDir) + "/.gchat");
+    }
+}
+
+void addFriend(Client& client, string name) {
+    std::string msg = "1 " + name;
+    client.sendData(msg.c_str());
+    std::string ans = client.receiveData();
+    
+    if (ans == "0") {
+        std::cout << "Такого юзера нет(" << endl;
+    } else if (ans == "1") {
+        std::cout << "Юзер найден и добавлен в чаты" << endl;
+        
+        if (!currentUser.empty()) {
+            std::string friendPath = std::string(homeDir) + "/.gchat/" + currentUser + "/" + name;
+            
+            if (!fs::exists(friendPath)) {
+                fs::create_directories(friendPath);
+                std::cout << "Создана папка для друга: " << name << endl;
+            }
+        }
+        
+    } else {
+        std::cerr << "error with db" << endl;
+    }
+}
+
+void startChat() {}
+
 int main() {
     Client client;
     std::string msg;
     const std::string serverAddress = "127.0.0.1";
     const int port = 7252;
+    createDIR();
     std::string welcome_msg = "";
+    int chat;
+    char choise;
+    char auth;
 
     if (!client.connectToServer(serverAddress, port)) {
         std::cout << "не удалось подключиться к серваку" << std::endl;
@@ -95,16 +140,54 @@ int main() {
         return 1;
     }
 
-    while (true) {
+    std::cout << "Логин/Рег" << std::endl; std::cin >> auth;
+
+    if (auth == '1') {
+        std::cout << "Напишите свое имя: ";
         std::cin >> msg;
         client.sendData(msg.c_str());
-        std::string resp = client.receiveData();
-        if (resp == "this name already exists") {
-            std::cout << resp << std::endl;
+        if (client.receiveData() == "0") {
+            std::cout << "имя принято" << std::endl;
+            
+            currentUser = msg;
+            std::string userPath = std::string(homeDir) + "/.gchat/" + msg;
+            
+            std::ifstream f(userPath.c_str());
+            if (!f) {
+                fs::create_directory(userPath);
+                std::cout << "Создана папка для пользователя: " << msg << std::endl;
+            } else {
+                std::cout << "Папка пользователя уже существует" << std::endl;
+            }
+            f.close();
+        }
+    } else if (auth == '2') {
+        std::cout << "Напишите свое имя: ";
+        std::cin >> msg;
+        client.sendData(msg.c_str());
+        if (client.receiveData() == "1") {
+            std::cout << "имя принято" << std::endl;
+        } else {
+            std::cout << "Имя не принято!\nПопробуйте другое в сл раз" << std::endl;
+            client.disconnect();
             return 1;
         }
-        std::cout << resp;
     }
+
+    // render main page of chats
+
+    std::cout << "1 - Добавить имя\n2 - Выбрать чат для общения\n\t~> ";
+    std::cin >> choise;
+    switch (choise) {
+        case '1':
+            std::string ip; std::cout << "Имя для добавления ~> "; std::cin >> ip;
+            addFriend(client, ip);
+    }
+    
+    // request to database for a messages in this chat
+    // request to server for connection
+    // render chat page with msgs
+    // cycle for chating
     
     client.disconnect();
     

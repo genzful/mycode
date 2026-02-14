@@ -115,7 +115,7 @@ public:
         connected[string(client_ip)] = client_fd;
         
         // send welcome
-        const char* welcome_msg = "Welcome to genzat chat server!\nsend me your name: ";
+        const char* welcome_msg = "Welcome to GENZCHAT!\n\tWrite me your name (1 ip can have max 3 accounts)";
         send(client_fd, welcome_msg, strlen(welcome_msg), 0);
         char name_buffer[BUFFER_SIZE];
         memset(name_buffer, 0, BUFFER_SIZE);
@@ -134,16 +134,15 @@ public:
         }
 
         if (!DB::insert(path_to_db, client_ip, name_buffer)) {
-            send(client_fd, "this name already exists", strlen("this name already exists"), 0);
-            close(client_fd);
+            send(client_fd, "0", 1, 0);
+        } else{
+            send(client_fd, "1", 1, 0);
         }
-
-        if (connected.size() > 1) {
-            string clients_msg = "Connected to chat\n";
-            send(client_fd, clients_msg.c_str(), clients_msg.length(), 0);
-        }
-
-        send(client_fd, "Waiting for other clients...\n", strlen("Waiting for other clients...\n"), 0);
+        
+        // if (connected.size() > 1) {
+        //     string clients_msg = "Connected to chat\n";
+        //     send(client_fd, clients_msg.c_str(), clients_msg.length(), 0);
+        // }
 
         while (true) {
             char buffer[BUFFER_SIZE];
@@ -161,17 +160,15 @@ public:
             if (buffer[bytes_received - 1] == '\n') {
                 buffer[bytes_received - 1] = '\0';
             }
-            
-            if (connected.size() > 1) {
-                for (const auto& pair : connected) {
-                    if (pair.first != string(client_ip)) {
-                        string full_msg = string(buffer) + "\n";
-                        send(pair.second, full_msg.c_str(), full_msg.length(), 0);
+
+            switch (buffer[0]) {
+                case '1':
+                    cout << buffer+2 << endl;
+                    if (DB::addUser(buffer+2)) {
+                        send(client_fd, "1", 1, 0);
+                    } else {
+                        send(client_fd, "0", 1, 0);
                     }
-                }
-            } else {
-                const char* waiting_msg = "Waiting for other clients...\n";
-                send(client_fd, waiting_msg, strlen(waiting_msg), 0);
             }
         }
     }
